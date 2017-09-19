@@ -1,0 +1,127 @@
+---
+title: "ASSIGNMENT-1"
+author: "sarthak verma"
+date: "23 August 2017"
+output: html_document
+---
+```{r}
+library(dplyr)
+library(knitr)
+parli=read.csv("C://Users//Administrator//Desktop//parliament.csv")
+dim(parli)
+View(parli)
+
+
+```
+#1.Identify year wise total number of electors and voters.Also compute percentage of voters.
+```{r}
+year_wise=parli %>% group_by(YEAR,PC) %>% summarise(total_votes=sum(VOTES,na.rm=TRUE))
+year_wise
+year_wise = parli %>% group_by(YEAR) %>% summarise(total_ELECTORS=sum(unique(ELECTORS))) 
+year_wise
+year_wise = parli %>% group_by(YEAR) %>% summarise(pct_voters=sum(VOTES)*100/sum(unique(ELECTORS)))
+year_wise
+```
+
+
+
+
+
+##2.Identify year wise percentage of male and female candidates.
+##PERCENTAGE MALES WAS HIGHEST IN 1996
+```{r}
+parli_male=filter(parli,SEX=='M')
+View(parli_male)
+parli_female=filter(parli,SEX=='F')
+View(parli_female)
+parli_male_count= parli_male %>% group_by(YEAR) %>% summarise(males=n()) %>% arrange(-YEAR)
+parli_female_count= parli_female %>% group_by(YEAR) %>% summarise(females=n()) %>% arrange(-YEAR)
+election_count=merge(parli_male_count,parli_female_count,by.x='YEAR',by.y='YEAR')
+election_count=election_count %>% arrange(-males,-females)
+election_count
+total=election_count$males+election_count$females
+total
+percentage_males=round((election_count$males/total)*100,2)
+percentage_males
+percentage_females=round((election_count$females/total)*100,2)
+percentage_females
+election_count=cbind(election_count,percentage_males)
+election_count=cbind(election_count,percentage_females)
+election_count
+```
+
+##3.compute party wise total number of candidates won so far?Display top ten parties alone
+##INC WAS THE TOP PARTY WITH 3348 CANDIDATES
+```{r}
+candidate_won = filter(parli,Position == 1)
+party_wise = candidate_won %>% group_by(PARTY) %>% summarise(winning_candidate=n()) %>% arrange(-winning_candidate)
+head(party_wise,10)
+
+```
+
+##4.Identify year wise which party has won (based upon total number constituencies won)
+##INC WON MAXIMUM SEATS 
+```{r}
+party_won = filter(parli,Position == 1)
+a=party_won %>% group_by(PARTY,YEAR) %>% summarise(winnum=n())
+a=a %>% group_by(YEAR) %>% filter(winnum==max(winnum)) %>% arrange(-YEAR)
+a
+
+```
+
+##5.Identify year wise percentage of winning for female candidates
+##HIGHEST PERCENTAGE WAS IN 2009
+```{r}
+parli_male=filter(parli,SEX=='M',Position==1)
+View(parli_male)
+parli_female=filter(parli,SEX=='F',Position==1)
+View(parli_female)
+parli_male_count= parli_male %>% group_by(YEAR) %>% summarise(males=n()) %>% arrange(-YEAR)
+parli_female_count= parli_female %>% group_by(YEAR) %>% summarise(females=n()) %>% arrange(-YEAR)
+election_count=merge(parli_male_count,parli_female_count,by.x='YEAR',by.y='YEAR')
+election_count=election_count %>% arrange(-males,-females)
+election_count
+total=election_count$males+election_count$females
+total
+percentage_females=round((election_count$females/total)*100,2)
+percentage_females
+election_count=cbind(election_count,percentage_females) %>% arrange(-YEAR)
+election_count
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
