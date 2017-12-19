@@ -1,0 +1,180 @@
+---
+title: "EDA3"
+author: "sarthak verma"
+date: "29 August 2017"
+output: html_document
+---
+```{r}
+library(dplyr)
+library(knitr)
+odi = read.csv("C://Users//Administrator//Desktop//odi-batting11.csv")
+View(odi)
+library(ggplot2)
+ggplot(odi,aes(x=Runs,y=ScoreRate)) + geom_smooth()
+
+```
+
+```{r}
+
+```
+
+```{r}
+library(ggplot2)
+sehwag_rows= filter(odi,Player=='Virender Sehwag')
+ggplot(sehwag_rows,aes(x=Runs,y=ScoreRate)) + geom_point() + geom_smooth()
+```
+#to plot for top 10 highest run scorers for india
+```{r}
+india_rows = filter(odi,Country == 'India')
+dim(india_rows)
+player_total_runs = india_rows %>% group_by(Player) %>% summarise(Total_Runs = sum(Runs, na.rm= TRUE)) %>% arrange(-Total_Runs)
+player_total_runs
+top_players_names= head(player_total_runs$Player,10) #creating an array
+top_players_names
+
+top_players_rows=odi[odi$Player %in% top_players_names,] #another way of filtering
+dim(top_players_rows)
+ggplot(top_players_rows,aes(x=Runs, y=ScoreRate)) + geom_point() +geom_smooth()
+```
+
+#filling color for players
+```{r}
+india_rows = filter(odi,Country == 'India')
+dim(india_rows)
+player_total_runs = india_rows %>% group_by(Player) %>% summarise(Total_Runs = sum(Runs, na.rm= TRUE)) %>% arrange(-Total_Runs)
+player_total_runs
+top_players_names= head(player_total_runs$Player,10) #creating an array
+top_players_names
+top_players_rows=odi[odi$Player %in% top_players_names,] #another way of filtering
+dim(top_players_rows)
+ggplot(top_players_rows,aes(x=Runs, y=ScoreRate,color=Player)) + geom_point()
+```
+
+#facet_wrap will plot for individual players
+```{r}
+india_rows = filter(odi,Country == 'India')
+dim(india_rows)
+player_total_runs = india_rows %>% group_by(Player) %>% summarise(Total_Runs = sum(Runs, na.rm= TRUE)) %>% arrange(-Total_Runs)
+player_total_runs
+top_players_names= head(player_total_runs$Player,10) #creating an array
+top_players_names
+
+top_players_rows=odi[odi$Player %in% top_players_names,] #another way of filtering
+dim(top_players_rows)
+ggplot(top_players_rows,aes(x=Runs, y=ScoreRate)) + geom_point() + facet_wrap(~Player)
+```
+
+#facet_wrap will plot graph for individual players
+```{r}
+india_rows = filter(odi,Country == 'India')
+dim(india_rows)
+player_total_runs = india_rows %>% group_by(Player) %>% summarise(Total_Runs = sum(Runs, na.rm= TRUE)) %>% arrange(-Total_Runs)
+player_total_runs
+top_players_names= head(player_total_runs$Player,10) #creating an array
+top_players_names
+
+top_players_rows=odi[odi$Player %in% top_players_names,] #another way of filtering
+dim(top_players_rows)
+ggplot(top_players_rows,aes(x=Runs, y=ScoreRate)) + geom_smooth() + facet_wrap(~Player)
+```
+#plotting graphs for top 10 players across the countries
+```{r}
+player_total_runs = odi %>% group_by(Player) %>% summarise(Total_Runs = sum(Runs, na.rm= TRUE)) %>% arrange(-Total_Runs)
+player_total_runs
+top_players_names= head(player_total_runs$Player,10) #creating an array
+top_players_names
+
+top_players_rows=odi[odi$Player %in% top_players_names,] #another way of filtering
+dim(top_players_rows)
+ggplot(top_players_rows,aes(x=Runs, y=ScoreRate,color=Player)) + geom_smooth()+ facet_wrap(~Player)
+```
+
+```{r}
+player_total_runs = odi %>% group_by(Player) %>% summarise(Total_Runs = sum(Runs, na.rm= TRUE)) %>% arrange(-Total_Runs)
+player_total_runs
+top_players_names= head(player_total_runs$Player,10) #creating an array
+top_players_names
+
+top_players_rows=odi[odi$Player %in% top_players_names,] #another way of filtering
+dim(top_players_rows)
+ggplot(top_players_rows,aes(x=Runs, y=ScoreRate)) + geom_point()+ geom_smooth()+ facet_wrap(~Player)
+```
+
+#sample question in copy
+```{r}
+odi$MatchDate=as.Date(odi$MatchDate,'%m-%d-%Y')
+odi$year=format(odi$MatchDate,'%Y')
+odi$weekday=format(odi$MatchDate,'%A')
+head(odi)
+india_rows = filter(odi,Country == 'India')
+dim(india_rows)
+
+#identify top 10 players by total matches
+top_ten = india_rows %>% group_by(Player) %>% summarise(total_matches=n()) %>%arrange(-total_matches)
+top_ten
+player_names=head(top_ten$Player,10)
+class(player_names)
+player_names
+
+#filter data again for these ten players
+top_player_record=india_rows[india_rows$Player %in% player_names,]
+dim(top_player_record)
+View(top_player_record)
+
+#For each player calculate total runs across year
+summary = top_player_record %>% group_by(Player,year,weekday) %>% summarise(total_runs=sum(Runs,na.rm=TRUE))
+summary
+
+ggplot(top_player_record,aes(x=year, y=Runs)) + geom_bar(stat='identity')+facet_wrap(~Player)
+```
+
+
+```{r}
+library(dplyr)
+library(knitr)
+modi_tweets=read.csv("C://Users//Administrator//Desktop//narendramodi_tweets.csv")
+View(modi_tweets)
+dim(modi_tweets)
+```
+
+```{r}
+modi_tweets$date = as.Date(modi_tweets$created_at,format='%d-%m-%Y %H:%M')
+modi_tweets$month = format(modi_tweets$date, '%m')
+
+src_grp=modi_tweets %>% group_by(source) %>% summarise(no_tweets=n()) %>% arrange(-no_tweets)
+src_grp
+
+
+src_grp_info=modi_tweets[modi_tweets$source %in% src_grp$source, ]
+src_grp_info
+
+final=src_grp_info %>% group_by(month,source) %>% summarise(total_twts=n()) %>% arrange(-total_twts)
+
+
+ggplot(final,aes(x=month,y=total_twts)) + geom_bar(stat='identity')+facet_wrap(~source)
+
+```
+
+#box plots
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
