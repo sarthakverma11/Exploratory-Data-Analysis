@@ -1,0 +1,88 @@
+---
+title: "EDA-2"
+author: "sarthak verma"
+date: "28 August 2017"
+output: html_document
+---
+```{r}
+library(dplyr)
+library(knitr)
+modi_tweets=read.csv("C://Users//Administrator//Desktop//narendramodi_tweets.csv")
+View(modi_tweets)
+dim(modi_tweets)
+```
+
+```{r}
+install.packages('ggplot2')
+library(ggplot2)
+
+```
+#COUNTING AVG RETWEETS
+```{r}
+library(dplyr)
+source_summary = modi_tweets %>% group_by(source) %>% summarise(count=n(),avg_rtwt=round(mean(retweets_count,na.rm=TRUE),2))
+source_summary
+```
+#to plot for avg retweets
+```{r}
+library(ggplot2)
+ggplot(source_summary,aes(x=source,y=count,fill= -avg_rtwt))+
+geom_bar(stat='identity') + coord_flip()    #to flip the bar
+```
+#to count tweets from source
+```{r}
+library(dplyr)
+source_summary = modi_tweets %>% group_by(source) %>% summarise(count=n(),avg_likes=mean(favorite_count),na.rm=TRUE)
+source_summary
+```
+
+```{r}
+modi_tweets$date = as.Date(modi_tweets$created_at,format='%d-%m-%Y %H:%M')
+head(modi_tweets$date)
+modi_tweets$year = format(modi_tweets$date, '%Y')
+modi_tweets$month = format(modi_tweets$date, '%m')
+modi_tweets$day = format(modi_tweets$date,"%d")
+modi_tweets$weekday = format(modi_tweets$date,'%A')
+head(select(modi_tweets,date,year,month,day,weekday))
+```
+#to calculate monthly tweets
+
+```{r}
+tweets_month = modi_tweets %>% group_by(month) %>% summarise(tweets_count=n())
+ggplot(tweets_month, aes(x=month,y=tweets_count))+
+geom_bar(stat='identity')
+```
+
+```{r}
+tweets_month = modi_tweets %>% group_by(month) %>% summarise(tweets_count=n())
+ggplot(tweets_month, aes(x=month,y=tweets_count,group=1))+
+geom_line()  
+```
+
+```{r}
+tweets_month = modi_tweets %>% group_by(month) %>% summarise(tweets_count=n())
+ggplot(tweets_month, aes(x=month,y=tweets_count,group=1))+
+geom_line(color='red')  + geom_bar(stat='identity')
+```
+
+#daywise number of hashtags
+```{r}
+modi_tweets$daily=format(modi_tweets$date,'%Y-%m-%d')
+hashtags = modi_tweets %>% group_by(daily) %>% summarise(hashtags_count=sum(hashtags_count))
+
+ggplot(hashtags, aes(x=daily,y=hashtags_count, group=1)) + geom_line()
+
+```
+
+
+#scattered plot--also used to detect outliers
+```{r}
+ggplot(modi_tweets,aes( x=favorite_count,y=retweets_count,color=source)) + geom_point() + geom_smooth()  #geom_smooth for observing pattern 
+```
+
+```{r}
+View(modi_tweets)
+```
+
+
+
