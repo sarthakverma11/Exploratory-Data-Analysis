@@ -1,0 +1,146 @@
+---
+title: "Rainfall in India"
+runtime: shiny
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(googleVis)
+library(flexdashboard)
+library(dplyr)
+library(ggplot2)
+library(datasets)
+library(shiny)
+library(plotly)
+library(reshape2)
+rain = read.csv('C://Users//Administrator//Desktop//Datasets//NEW.csv')
+rainy = read.csv("C://Users//Administrator//Desktop//Datasets//rainfall in india 1901-2015.csv")
+```
+
+
+Average annual rainfall in States and UT's of India
+======================================================================================
+
+
+```{r}
+
+
+uiOutput("dynamic")
+
+output$dynamic <- renderUI({
+pageWithSidebar(
+headerPanel("Select menu"),
+sidebarPanel(selectInput(inputId = 'Region', label='Select a region', choices = c('East Coast', 'West Coast','East and West Coasts', 'All of India'), selected='All of India')),
+mainPanel(
+h3(textOutput("text")),
+htmlOutput("myMap")
+)
+)
+})
+
+sel = reactive({
+  input$Region
+})
+
+output$text = renderText({
+    paste("Average rainfall in region:", sel())
+  })
+
+output$myMap = renderGvis({
+r = rain %>% group_by(STATE_UT_NAME) %>% summarise(avg = mean(ANNUAL,na.rm=T))
+ec = c('ANDHRA PRADESH', 'ORISSA', 'TAMIL NADU', 'WEST BENGAL')
+wc = c('GOA', 'GUJARAT', 'KARNATAKA', 'KERALA', 'MAHARASHTRA')
+data={
+if(sel()=='East and West Coasts'){
+  data1 = filter(r,STATE_UT_NAME %in% c(ec,wc))
+} else if(sel() == 'West Coast'){ 
+  data1 = filter(r, STATE_UT_NAME %in% wc)
+  }
+else if(sel() == 'East Coast'){
+  data1 = filter(r, STATE_UT_NAME %in% ec)
+}
+  else{
+    data1 = r
+  }
+  data1
+}
+
+gvisGeoChart(data, locationvar = "STATE_UT_NAME", "avg",
+                          options=list(region="IN", 
+                                       displayMode="regions", 
+                                       resolution="provinces",
+                                       width=800, height=400,
+                          colorAxis="{colors:['#FFFFFF', '#0000FF']}" ))
+
+
+})
+
+```
+
+Rainfall trends across years in India
+=====================================================================================
+
+row{data-width=800}
+------------------------------------------------------------------------------------
+```{r}
+renderPlotly({
+  r = rainy %>% group_by(YEAR) %>% summarise(a = mean(ANNUAL, na.rm=T))
+ ggplot(r, aes(YEAR, a)) + geom_line(color='blue') + labs(title ='Average annual rainfall in India across years 1905 to 2015', y='Average Annual Rainfall') + theme_bw()
+})
+```
+
+row
+------------------------------------------------------------------------------------
+### KERALA, TAMIL NADU
+```{r}
+renderPlotly({
+ ri = filter(rainy, rainy$SUBDIVISION %in% c('KERALA','TAMIL NADU'))
+ ri[] = lapply(ri, function(x) if(is.factor(x)) factor(x) else x)
+ t = round(apply(ri[ri$SUBDIVISION=='TAMIL NADU',][,3:14],2,mean),2)
+ k = round(apply(ri[ri$SUBDIVISION=='KERALA',][,3:14],2,mean),2)
+ tk = as.data.frame(cbind(month =factor(names(ri[,3:14])),t,k))
+ ggplot(tk, aes(x=month)) + geom_line(aes(y=t, group=1),col='blue') + geom_point(aes(y=t),col='blue') + geom_point(aes(y=k),col='green') + geom_line(aes(y=k, group=2),col='green') + labs(x='Months' ,y = 'Average monthly rainfall' , title = 'Comparison between rainfall in Tamil Nadu and Kerala') + scale_x_discrete(limits=month.abb)
+})  
+```
+
+
+
+Region-wise variation in rainfall
+=====================================================================================
+
+column{.tabset}
+-------------------------------------------------------------------------------------
+### 5 States with maximum variation in rainfall
+```{r}
+renderPlot({
+rn = rain %>% group_by(STATE_UT_NAME) %>% summarise(std_dev = sd(ANNUAL,na.rm=T)) %>% arrange(-std_dev)
+rn = head(rn,5)
+f = filter(rain,STATE_UT_NAME %in% rn$STATE_UT_NAME)
+f[] = lapply(f, function(x) if(is.factor(x)) factor(x) else x)
+try(boxplot(ANNUAL~STATE_UT_NAME,f, col=2:6, xaxt='n', ann=F) + legend('topleft',legend=unique(f$STATE_UT_NAME), fill=2:6, cex=.8), silent = T)
+})
+```
+
+-------------------------------------------------------------------------------------
+### 5 most arid districts in India by average annual rainfall
+```{r}
+renderPlot({
+ra = rain %>% group_by(DISTRICT) %>% summarise(avg = mean(ANNUAL,na.rm=T)) %>% arrange(avg)
+ra = head(ra,5)
+ggplot(ra, aes(reorder(DISTRICT,avg), avg, fill=DISTRICT)) + geom_bar(stat='identity') + labs(x='Districts', y='Average annual rainfall') + geom_text(aes(label = avg), position = position_dodge(width = .9), vjust = -0.25) + theme(axis.text.x = element_text(angle = 90))
+})
+```
+
+column{}
+------------------------------------------------------------------------------------------
+### Comparison between Kerala and Tamil Nadu rainfall patterns
+```{r}
+renderPlotly({
+  tk = filter(rainy, SUBDIVISION %in% c('TAMIL NADU','KERALA'))
+  m= melt(tk, id=c('SUBDIVISION','ANNUAL','YEAR'))
+  ggplot(tk, aes(YEAR, ANNUAL, col=SUBDIVISION)) + geom_line() + labs(y='Annual rainfall in cm')
+})
+```
