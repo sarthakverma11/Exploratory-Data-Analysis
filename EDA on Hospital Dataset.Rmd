@@ -1,0 +1,189 @@
+---
+title: "readmission"
+author: "SARTHAK VERMA"
+date: "30 December 2017"
+output: html_document
+---
+```{r}
+library(dplyr)
+library(ggplot2)
+library(knitr)
+read=read.csv('C://Users//Administrator//Desktop//READMISSION REDUCTION.csv')
+summary(read)
+View(read)
+str(read)
+dim(read)
+typeof(read)
+read$Footnote=NULL
+View(read)
+dim(read)
+colSums(is.na(read))
+#converting data types
+read$Hospital.Name=as.character(read$Hospital.Name)
+read$State=as.character(read$State)
+read$Number.of.Discharges=as.numeric(read$Number.of.Discharges)
+read$Expected.Readmission.Rate=as.numeric(read$Expected.Readmission.Rate)
+read$Expected.Readmission.Rate=as.numeric(read$Expected.Readmission.Rate)
+read$Number.of.Readmissions=as.numeric(read$Number.of.Readmissions)
+read$Expected.Readmission.Rate=as.numeric(read$Expected.Readmission.Rate)
+read$Excess.Readmission.Ratio=as.numeric(read$Excess.Readmission.Ratio)
+read$Predicted.Readmission.Rate=as.numeric(read$Predicted.Readmission.Rate)
+read$Excess.Readmission.Ratio=as.numeric(read$Excess.Readmission.Ratio)
+str(read)
+```
+#calculating total number of discharges according to hospital name
+```{r}
+library(zoo)
+na.locf(read$Number.of.Discharges)
+total_discharges = read %>% group_by(Hospital.Name) %>% summarise(total_discharges=n()) %>% arrange(-total_discharges)
+top_10=head(total_discharges,10)
+top_10
+P1=ggplot(top_10,aes(x=Hospital.Name,y=total_discharges)) + geom_bar(stat='identity',width = 0.6,aes(fill=total_discharges))
+P1
+
+#reordering the bars
+P2=ggplot(top_10,aes(x=reorder(Hospital.Name,-total_discharges),y=total_discharges)) + geom_bar(stat='identity',width = .6,aes(fill=total_discharges))
+P2
+P3=P2 +theme(axis.text.x = element_text(angle = 90))
+P3
+```
+#Removing the background grid
+
+```{r}
+#arranging x axis
+P4=P3 + theme(axis.text.x = element_text(angle = 90))
+P4
+
+
+#removing x axis text and ticks
+P5 = P4 + theme(axis.text.x=element_blank(),axis.title.x=element_blank() , axis.ticks.x= element_blank())
+P5
+```
+## Adjusting the legends
+# Hiding the legend title
+```{r}
+P6=P5 +theme(legend.title = element_blank())
+P6
+#changing the position of legend
+P7=P6+theme(legend.position = 'bottom')
+P7
+
+```
+
+# Changing the legends size (text Plus blocks)
+```{r}
+P8=P7 + theme(legend.key.width=unit(.2,'cm'))
+P8
+```
+
+
+
+```{r}
+# Renaming x-axis and Y-axis and plot name
+
+P9 = P8 + labs(subtitle="Top 10 discharges", 
+               y="Number of discharges", x="hospital Name", title="Bar Plot", 
+               caption = "Source: MCI")
+P9
+
+```
+#CREATING HISTOGRAM AND SCATTERPLOT
+```{r}
+hist(read$Number.of.Discharges)
+boxplot(read$Number.of.Discharges)
+scatter.smooth(read$Number.of.Discharges)# scatter plot
+```
+
+#most frequently appearing state
+
+```{r}
+unique(read$State)
+by_state=sort(table(read$State),decreasing = TRUE)
+a=head(by_state)
+a
+b=as.data.frame(a)
+b
+c=head(b)
+d=ggplot(c,aes(x=reorder(Var1,-Freq),y=Freq)) + geom_bar(stat = 'identity',width=.6,aes(fill=Var1))
+d
+p1=d+theme(axis.title.x = element_blank(),axis.ticks.x = element_blank(),axis.title.y = element_blank())
+p1
+
+
+```
+ ##calculating statewise average expected readmission rate
+ 
+```{r}
+class(read$Expected.Readmission.Rate)
+read$Expected.Readmission.Ratio=as.numeric(read$Expected.Readmission.Rate)
+class(read$Expected.Readmission.Rate)
+read11=read %>% group_by(State) %>% summarise(sum_rer=mean(Expected.Readmission.Rate)) %>% arrange(-sum_rer)
+a=head(read11,10)
+#REORDERING THE BAR GRAPHS
+p1=ggplot(a,aes(x=reorder(State,-sum_rer),y=sum_rer,group==1)) + geom_bar(stat ='identity',width = .6,aes(fill=State))
+p2=p1+theme_bw()
+p2
+p3=p2 + theme(axis.text.x = element_text(angle=90))
+p3
+p4=p3+theme(axis.ticks.x = element_blank())
+p4
+p5=p4+theme(axis.text.x = element_blank(),axis.title.x = element_blank())
+p5
+p6=p5+theme(legend.title = element_blank(),legend.position = "bottom")
+p6
+p7=p6+theme(axis.title.y=element_blank(),axis.ticks.y = element_blank(),axis.text = element_blank())
+p7
+
+
+
+```
+
+```{r}
+str(read)
+```
+##calculating hospital wise total excess readmission ratio
+```{r}
+a=read %>% group_by(Hospital.Name) %>% summarise(t_e_r=sum(Excess.Readmission.Ratio)) %>% arrange(-t_e_r)
+b=head(a)
+b
+p1=ggplot(b,aes(x=Hospital.Name,y=t_e_r))+geom_bar(stat = 'identity',width = 0.5,aes(fill=t_e_r))
+p20=p1+theme(axis.text.x = element_text(angle=90),axis.text.y=element_blank(),axis.ticks.x = element_blank(),axis.ticks.y = element_blank(),axis.title.y = element_blank(),axis.title.x = element_blank())
+p20
+```
+
+#frequency distribution of state column
+```{r}
+freq_dist=read %>% group_by(State) %>%  summarise(count=n()) %>% arrange(-count)
+freq_dist
+a=head(freq_dist)
+b=ggplot(a,aes(x=reorder(State,-count),y=count,fill=State)) + geom_bar(stat = 'identity',width=.5)
+b
+p1=b+theme(axis.title.x = element_blank(),axis.ticks.x = element_blank(),axis.text.x = element_blank(),axis.title.y = element_blank(),axis.ticks.y = element_blank())
+p1
+```
+
+##hospital wise frequency distribution
+```{r}
+freq_dist_h=read %>% group_by(Hospital.Name) %>% summarise(count=n()) %>% arrange(-count)
+a=head(freq_dist_h)
+library(ggplot2)
+b=ggplot(a,aes(x=reorder(Hospital.Name,-count),y=count,fill=Hospital.Name)) + geom_bar(stat = 'identity',width = .6)
+b
+p1=b+theme(axis.text.x = element_text(angle = 90),axis.title.x = element_blank(),axis.title.y = element_blank(),axis.ticks.x = element_blank())
+p1
+```
+
+#scatter plot between predicted readmission rate and expected readmission rate for state AL
+
+```{r}
+state_wise=filter(read,State=='AL')
+a=head(state_wise)
+ggplot(a,aes(x=Predicted.Readmission.Rate,y=Expected.Readmission.Rate)) + geom_point() + geom_smooth()
+```
+
+
+
+
+
+
+
