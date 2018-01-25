@@ -100,7 +100,7 @@ dim(top_players_rows)
 ggplot(top_players_rows,aes(x=Runs, y=ScoreRate)) + geom_point()+ geom_smooth()+ facet_wrap(~Player)
 ```
 
-#sample question in copy
+#Total Matched for India
 ```{r}
 odi$MatchDate=as.Date(odi$MatchDate,'%m-%d-%Y')
 odi$year=format(odi$MatchDate,'%Y')
@@ -154,8 +154,6 @@ final=src_grp_info %>% group_by(month,source) %>% summarise(total_twts=n()) %>% 
 ggplot(final,aes(x=month,y=total_twts)) + geom_bar(stat='identity')+facet_wrap(~source)
 
 ```
-
-#box plots
 
 
 
