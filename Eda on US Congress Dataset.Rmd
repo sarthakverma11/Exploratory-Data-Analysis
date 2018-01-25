@@ -1,0 +1,218 @@
+---
+title: "Problem Statement"
+author: "Sarthak Verma"
+date: "22 September 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(corrplot)
+
+```
+
+
+#Importing the dataset
+- Describing the dataset
+ - finding no. of columns, rows and class types of columns
+```{r}
+congress = read.csv("D:/Problem1/Data Set.csv", na.strings = '')
+
+dim(congress)
+
+names(congress)
+
+str(congress)
+```
+
+# Data sanity
+
+- Calculating percentage of NAs in each column
+```{r}
+colSums(is.na(congress)/nrow(congress)*100)
+
+```
+
+
+#Data Cleaning
+- converting specific column types to their respective class
+- deriving a new Full name column combining first name, middlename and last name
+- creating date column
+```{r}
+congress$firstname = as.character(congress$firstname)
+congress$middlename = as.character(congress$middlename)
+congress$lastname = as.character(congress$lastname)
+congress$suffix = gsub(congress$suffix,pattern = 'NA',replacement = '')
+congress$suffix = as.character(congress$suffix)
+
+congress$X = NULL
+congress$X.1 = NULL
+
+# Deriving a new Name column
+
+congress$name = paste(congress$firstname,congress$middlename,congress$lastname, sep = ' ')
+
+congress$birthday = as.Date(congress$birthday,'%Y-%m-%d')
+congress$termstart = as.character(congress$termstart)
+congress$termstart = as.Date(congress$termstart, '%m/%d/%Y')
+
+congress$age = as.character(congress$age)
+congress$age = as.numeric(congress$age)
+
+congress$state = as.character(congress$state)
+
+View(congress[which(nchar(congress$state)>2),])
+#congress[which(nchar(congress$state)>2),]$birthday = congress[which(nchar(congress$state)>2),]$state
+
+congress$party = as.character(congress$party)
+congress$incumbent = as.character(congress$incumbent)
+
+
+```
+
+#Data Imputation
+- Imputing the missing ages with mean age 
+```{r}
+congress1 = congress
+congress1[which(is.na(congress1$age)),]$age = 53.31
+
+congress1[congress1$party == '3/15/1926',]
+congress1 = congress1[-c(10018,10549,11074,11605,12140,12663)]
+```
+
+# Analysis
+- Numeric 
+- creating age groups (derived column)
+
+##Univariate analysis of Age
+```{r}
+congress1$age_grp = cut(congress1$age, breaks = c(0,30,40,60,80,Inf),labels = c("0-30","30-40","40-60","60-80","80+"))
+
+age_freq = congress1 %>% group_by(age_grp) %>% summarise(Count = n())
+kable(age_freq[1:5,])
+
+ggplot(data= age_freq) + geom_bar(aes(x = age_grp, y= Count,fill = age_grp),stat = 'identity')
+
+hist(congress1$age)
+
+mean(congress1$age)
+```
+
+
+```{r}
+boxplot(congress1$age)
+
+quantile(congress1$age)
+
+iqr = 60.5-45.5  #Q3-Q1
+iqr
+
+upper_whisker = 60.5 + 1.5*iqr
+upper_whisker
+
+outlier_perc = sum(congress1$age>83, na.rm = TRUE)*100/nrow(congress1) 
+outlier_perc
+
+```
+
+
+
+# Calculate avg age of people for same first name in each chamber
+
+```{r}
+house = congress1 %>% filter(chamber == 'house')
+senate = congress1 %>% filter(chamber == 'senate')
+avg_age_house = house %>% group_by(firstname) %>% summarise(Avg_age = mean(age, na.rm=TRUE)) %>% arrange(-Avg_age)
+avg_age_house
+
+avg_age_senate = senate %>% group_by(firstname) %>% summarise(Avg_age = mean(age, na.rm=TRUE)) %>% arrange(-Avg_age)
+avg_age_senate
+
+
+```
+#Bi variate 
+
+```{r}
+incumbent_freq = congress1 %>% group_by(incumbent) %>% summarise(Total_count = n()) %>% arrange(-Total_count)
+kable(incumbent_freq[1:5,])
+
+inc_party = senate %>% group_by(party,incumbent) %>% summarise(count = n()) %>% arrange(-count)
+kable(inc_party[1:6,])
+
+
+```
+
+# which party has won how many times in both chambers
+```{r}
+senate_won = senate %>% group_by(congress,party) %>% summarise(count = n()) 
+kable(senate_won[1:10,])
+
+house_won = house %>% group_by(congress,party) %>% summarise(count = n()) %>% arrange(-congress) 
+kable(house_won[1:11,])
+
+ggplot(senate_won, aes(x= congress, y = count)) + geom_bar(aes(fill = party),stat = 'identity')
+
+ggplot(house_won, aes(x= congress, y = count)) + geom_bar(aes(fill = party),stat = 'identity',show.legend = F) + xlab('D = blue, R-pink') 
+```
+
+# When same party was in majority in both houses
+```{r}
+win = congress1 %>% group_by(congress,chamber,party) %>% summarise(count =n())  
+
+
+win_party = win %>%group_by(congress,chamber) %>% filter(count == max(count))
+
+
+win_congress = subset(win_party,select =c(congress,chamber,party))
+win_congress_plot = win_congress %>% mutate(govt = ifelse(party == 'R',1,ifelse(party=='D',-1,0)),party = party) 
+plot = win_congress_plot %>% group_by(congress,party) %>% summarise(Same_or_diff = sum(govt,na.rm =T))
+ggplot(data = plot) + geom_bar(aes(x=congress, y = Same_or_diff, fill = party),stat = 'identity')
+
+```
+
+# pca
+```{r}
+newdata = congress[,c(1,13)]
+newdata$age = as.character(newdata$age)
+newdata$age = as.numeric(newdata$age)
+
+newdata[which(is.na(newdata$age)),]$age = 53.31
+
+
+## Scaling the data
+scaled_data=scale(newdata)
+
+
+##getting eigen values 
+eval=eigen(cor(scaled_data))$values
+eval
+evec=eigen(cor(scaled_data))$vectors
+evec
+
+pcs_data=scaled_data %*% evec
+dim(pcs_data)
+
+
+corrplot(cor(pcs_data))
+cumsum(eval /length(eval)*100)
+
+vars_cum=cumsum(eval / length(eval) * 100)
+a = matrix(c(0,2,95,95), 2,2, byrow= FALSE)
+{plot(a, type='l', col='blue')
+lines(vars_cum, col='red')}
+
+data_rc = pcs_data %*% t(evec)
+data_rc= as.data.frame(data_rc)
+
+names(data_rc) = names(newdata)
+
+
+scaled_data=as.data.frame(scaled_data)
+plot(scaled_data$age, type='l', col='orange')
+lines(data_rc$age, col='blue')
+
+```
+
