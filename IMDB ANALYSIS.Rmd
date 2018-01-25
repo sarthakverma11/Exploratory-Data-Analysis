@@ -1,0 +1,96 @@
+---
+title: "IMDB ANALYSIS"
+author: "sarthak verma"
+date: "14 September 2017"
+output: html_document
+---
+```{r}
+library(dplyr)
+library(knitr)
+imdb=read.csv("C://Users//Administrator//Desktop//imdb.csv")
+dim(imdb)
+View(imdb)
+library(ggplot2)
+help("imdb")
+data(imdb)
+```
+#calculating number of nulls in each column
+```{r}
+x=c()
+for(i in 1: ncol(imdb))
+{
+  nulls_count = length(which(is.na(imdb)))
+  x=append(x,nulls_count)
+  print(nulls_count)
+}
+```
+
+#checking data sanity-calculating missing values in dataset
+```{r}
+colSums(is.na(imdb))
+
+```
+#checking frequency distribution for each column
+```{r}
+col_name="director_name"
+data=imdb %>% group_by(category = get(col_name)) %>% summarise(count=n())
+data
+
+```
+#calculating percentage of director name column
+```{r}
+col_name="director_name"
+data=imdb %>% group_by(category = get(col_name)) %>% summarise(count=n() * 100/nrow(imdb))
+data
+```
+#frequency distribution for num_critic_for_reviews
+```{r}
+col_name="duration"
+imdb1=imdb %>% group_by(category=get(col_name)) %>% summarise(count=n() *100/nrow(imdb)) %>% arrange(-count)
+imdb1
+
+
+
+
+```
+#creating histograms of different column
+```{r}
+hist(imdb$actor_1_facebook_likes)
+hist(imdb$director_facebook_likes)
+```
+#creating boxplot
+```{r}
+boxplot(imdb$actor_3_facebook_likes)
+```
+#CALCULATING OUTLIERS FOR DURATION 
+```{r}
+quantile(imdb$duration,na.rm = TRUE)
+IQR(imdb$duration,na.rm = TRUE)
+```
+
+#outlier is 155.5
+```{r}
+sum(imdb$duration>155.5,na.rm = TRUE)*100/nrow(imdb)
+```
+```{r}
+data11=imdb %>% group_by(genres) %>% summarise(count=n()) %>% arrange(-count)
+data11
+```
+#univariate plots section
+
+```{r}
+imdb1 <- imdb %>% 
+  group_by(director_name) %>%
+  summarise(count = n())%>%
+  filter(count >10, count <50) %>% arrange(-count)
+imdb1
+ggplot(imdb1,aes(x=director_name,y=count)) + geom_bar(stat='identity')
+  
+
+```
+
+
+
+
+
+
