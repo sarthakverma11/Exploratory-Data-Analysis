@@ -1,0 +1,89 @@
+---
+title: "Untitled"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(knitr)
+library(dplyr)
+movies=read.csv("C://Users//Administrator//Desktop//Movie-Ratings.csv")
+colnames(movies)=c("Film","Genre","CriticRatings","AudienceRatings","Budgetmillion","Year")
+View(movies)
+#Converting to factor so that we can group them
+movies$Year=as.factor(movies$Year)
+
+```
+#Aesthetics
+```{r}
+library(ggplot2)
+ggplot(data=movies,aes(x=CriticRatings,y=AudienceRatings))
+
+
+#Add geometry
+ggplot(data=movies,aes(x=CriticRatings,y=AudienceRatings)) + geom_point()
+
+#Add colour
+ggplot(data=movies,aes(x=CriticRatings,y=AudienceRatings,colour=Genre)) + geom_point()
+
+#Adding size
+ggplot(data=movies,aes(x=CriticRatings,y=AudienceRatings,colour=Genre,size=Genre)) + geom_point()
+
+#Adding size-better way
+ggplot(data=movies,aes(x=CriticRatings,y=AudienceRatings,colour=Genre,size=Budgetmillion)) + geom_point()
+
+```
+
+#Plotting with layers
+
+```{r}
+p=ggplot(data=movies,aes(x=CriticRatings,y=AudienceRatings,colour=Genre,size=Budgetmillion)) + geom_point()
+
+#ADDING points and line
+p+geom_point()
+
+```
+#Overriding Aesthetics
+```{r}
+q=ggplot(data=movies,aes(x=CriticRatings,y=AudienceRatings,colour=Genre,size=Budgetmillion))
+q+geom_point(aes(x=CriticRatings))
+
+
+q+geom_point(aes(x=Budgetmillion)) + xlab("Budget Million$$$") 
+
+```
+#Mapping vs Setting
+```{r}
+r=ggplot(data=movies,aes(x=CriticRatings,y=AudienceRatings))
+r+geom_point()
+
+#setting color
+r + geom_point(color="DarkGreen")
+```
+
+#Histogram and Density Charts
+```{r}
+s=ggplot(data=movies,aes(x=Budgetmillion))
+#Add colour and border
+s + geom_histogram(binwidth = 10,aes(fill=Genre),colour="Black")
+```
+
+#Adding density chart
+```{r}
+s + geom_density(aes(fill=Genre,position="stack"))
+````
+`
+`#Starting Layer tips
+```{r}
+t=ggplot(data=movies,aes(x=AudienceRatings))
+t+ geom_histogram(binwidth = 10,fill="white",colour="Blue")
+
+#Another way for flexibility
+t= ggplot(data=movies)
+t+geom_histogram(binwidth = 10,aes(x=CriticRatings),fill="white",colour="blue")
+```
+
+
